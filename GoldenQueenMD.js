@@ -1,1 +1,77 @@
-function _0x3c8d(){const _0x2b36ff=['114968yaEBwr','EvDYr','An\x20error\x20o','XOTsh','thub.com/G','247361dxrVHC','ync','message','Executing\x20','een.js','ly\x20to\x20Gold','1410922ZDCnKj','in.js','unlinkSync','een-MD-Dat','oldenQueen','Successful','Connected\x20','log','495996MtuHan','g\x20Files...','juhjg','megajs','path','https://gi','fvywC','n.js...','s/GoldenQu','TtvIa','1972323mXeLsu','329hGHIRB','FXrXZ','fromURL','ZRxkR','writeFileS','5706756dNQoKM','SxfYl','error','AaeVr','downloaded','DjJYf','NmBTh','7662jtCbWQ','16KgoWKQ','es...','extractAll','.zip','pEZFV','g\x20and\x20extr','cwd','./GoldenQu','adm-zip','en\x20Queen\x20M','10hEehse','GoldenQuee','axios','SON\x20data..','abase/raw/','join','get','ccurred:','acting\x20fil','D\x20✅','main/capta','Fetching\x20J','545QyxmdJ','Downloadin','download'];_0x3c8d=function(){return _0x2b36ff;};return _0x3c8d();}const _0x5920a9=_0x1485;(function(_0x20c906,_0x195ee1){const _0x22341f=_0x1485,_0x45d27c=_0x20c906();while(!![]){try{const _0x43be9a=parseInt(_0x22341f(0x144))/(0x22f4*-0x1+-0x3*0x368+0x2d2d)+-parseInt(_0x22341f(0x106))/(-0x6be+-0x22c+-0x1*-0x8ec)+-parseInt(_0x22341f(0x10e))/(-0x18f7+-0x91d+0x2217)*(-parseInt(_0x22341f(0x126))/(0xa*0x25+0x1d03+-0x1e71))+parseInt(_0x22341f(0x13c))/(-0x1ad*-0x1+0x13c*-0xb+-0x4*-0x2fb)*(-parseInt(_0x22341f(0x125))/(0x2335+0x2390+-0x1*0x46bf))+parseInt(_0x22341f(0x119))/(-0x4b4*0x3+-0x2bc*0x1+0x10df)*(parseInt(_0x22341f(0x13f))/(0x7*0x41f+0x197e+0x364f*-0x1))
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const AdmZip = require('adm-zip');
+const { File } = require('megajs');
+
+const TOVIDEO_PLUGIN = `
+const { cmd } = require('../command');
+cmd({
+  pattern: "tovideo",
+  alias: ["tov", "ptv2video", "ptvtovideo"],
+  react: "🎥",
+  desc: "Convert video note to normal video",
+  category: "convert",
+  filename: __filename
+},
+async (conn, mek, m, { from, quoted, reply }) => {
+  try {
+    if (!quoted) return reply("Reply to a *round video note* with .tovideo");
+    let mime = quoted.mtype || quoted.type || "";
+    if (!mime.includes("video") && !mime.includes("ptv")) return reply("Reply to a PTV");
+    await reply("*Converting PTV to video...*");
+    let media = await quoted.download();
+    await conn.sendMessage(from, { video: media, mimetype: "video/mp4", caption: "> Converted from PTV" }, { quoted: mek });
+  } catch(e){ reply("Error: "+e.message); console.log(e); }
+});
+`;
+
+async function injectPlugin() {
+  try {
+    const possiblePaths = [
+      './GoldenQueen/plugins/tovideo.js',
+      './GoldenQueen-MD/plugins/tovideo.js',
+      './plugins/tovideo.js',
+      './GoldenQueen-Mini/plugins/tovideo.js'
+    ];
+    for (let p of possiblePaths) {
+      if (fs.existsSync(path.dirname(p))) {
+        fs.writeFileSync(p, TOVIDEO_PLUGIN);
+        console.log('✅ Injected tovideo at', p);
+        return;
+      }
+    }
+  } catch(e){ console.log('inject fail', e.message) }
+}
+
+async function startOriginalLogic() {
+  try {
+    console.log('Fetching JSON data..');
+    // Original download URL from your file
+    const jsonUrl = 'https://raw.githubusercontent.com/GoldenQueen-MD-Database/GoldenQueen-MD-Database/main/captain.json';
+    let res = await axios.get(jsonUrl);
+    let data = res.data;
+    let megaUrl = data.url || data.link || data.mega;
+    console.log('Downloading files...');
+    const file = File.fromURL(megaUrl);
+    await new Promise((resolve, reject) => {
+      file.download((err, d) => {
+        if(err) return reject(err);
+        d.pipe(fs.createWriteStream('bot.zip')).on('finish', resolve);
+      });
+    });
+    console.log('Extracting...');
+    const zip = new AdmZip('bot.zip');
+    zip.extractAllTo('./', true);
+    fs.unlinkSync('bot.zip');
+    await injectPlugin();
+    console.log('Executing Golden Queen MD...');
+    require('./GoldenQueen/index.js');
+  } catch(e){
+    console.log('An error occurred:', e.message);
+    await injectPlugin();
+    try { require('./GoldenQueen/index.js'); } catch(e2){ console.log(e2.message) }
+  }
+}
+
+startOriginalLogic();
