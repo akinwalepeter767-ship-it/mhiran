@@ -44,5 +44,5 @@ module.exports = {
 
 
 MAX_SIZE: 500,
-DELETEMSGSENDTO : process.env.DELETEMSGSENDTO === undefined ? '' : process.env.DELETEMSGSENDTO
+DELETEMSGSENDTO : process.env.DELETEMSGSENDTO || "",
 };
